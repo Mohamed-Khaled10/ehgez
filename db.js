@@ -24,4 +24,12 @@ DATE TEXT NOT NULL,
 PHONENUMBER INTEGER NOT NULL UNIQUE,
 FOREIGN KEY (PHONENUMBER) REFERENCES USER(PHONENUM))`
 
-module.exports = {db,createUserTable, createCourtsTable, createBookingTable}
+const createReviewTable = `CREATE TABLE IF NOT EXISTS REVIEWS(
+ID INTEGER PRIMARY KEY AUTOINCREMENT,
+COURT_ID INTEGER NOT NULL,
+USER_ID INTEGER NOT NULL,
+RATING INTEGER NOT NULL,
+COMMENT TEXT,
+STATUS TEXT DEFAULT)`
+
+module.exports = {db,createUserTable, createCourtsTable, createBookingTable,createReviewTable}
