@@ -5,13 +5,13 @@ const server = express()
 const port = 111
 server.use(express.json())
 
-server.post('/user/register' ,(req,res)=>{
+server.post(`/user/register`,(req,res)=>{  
     const name = req.body.name
     const email = req.body.email
     const password = req.body.password
-    const IsAdmin = req.body.IsAdmin
-    db.run(`INSERT INTO USER(name,email,password,IsAdmin) Values ('${name}',
-        '${email}', '${password}', ${IsAdmin})`, (err) => {
+    
+
+    db.run(`INSERT INTO USER (name,email,password,isadmin) VALUES (?,?,?,?)`,[name,email,password,0], (err) => {
             if(err)
                 return res.status(401).send(err)
             else
@@ -84,21 +84,11 @@ server.get(`/courts`, (req,res)=>{
     })
 })
 
-
-
-
-
-
-
-
-
-
-
 server.listen(port,()=>{
     console.log(`server started at port ${port}`)
     db.serialize(()=>{
-        db.exec(db.createUserTable);
-        db.exec(db.createCourtsTable);
-        db.exec(db.createBookingTable);
+        db.run(db_access.createUserTable);
+        db.run(db_access.createCourtsTable);
+        db.run(db_access.createBookingTable);
     })
 })
