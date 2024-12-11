@@ -31,7 +31,7 @@ server.post('/user/login' , (req,res) =>{
         })
 })
 
-server.get('/users/:id', (req,res) =>{
+server.get('/user/:id', (req,res) =>{
     const userId = req.params.id;
 
     const query = `SELECT * FROM USER WHERE ID = ?`;
