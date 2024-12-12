@@ -22,7 +22,7 @@ server.post(`/user/register`,(req,res)=>{
 
 server.post('/user/login' , (req,res) =>{
     const email =req.body.email
-    const password = req.body.email
+    const password = req.body.password
     db.get('SELECT * FROM USER WHERE email = ? AND password = ?' , [email, password], (err,row)=> {
             if(err|| !row)
                 return res.status(401).send('Invalid Credentials!')
@@ -95,7 +95,7 @@ server.delete('/user/:id', (req, res) => {
 
 server.post(`/courts/addcourts` ,(req,res)=>{
     const name=req.body.name
-    const price=req.bosy.price
+    const price=req.body.price
     const location=req.body.location
     const rating=req.body.rating
     const phonenum=req.body.phonenum
@@ -124,53 +124,57 @@ server.get(`/courts`, (req,res)=>{
     })
 })
 
-server.put('/court/:id', (req, res) => {
-    const userid  = req.USER.id;
+server.put('/courts/:id', (req, res) => {
+    const { id } = req.params; 
     const { name, location, price, rating, phonenum, court_amenities } = req.body;
-    let queryadd = []
-    let paramm = []
+    let queryadd = [];
+    let paramm = [];
 
-    if (name) { 
-    queryadd.push(`username = ?`)
-    paramm.push(name)
+    
+    if (name) {
+        queryadd.push(`name = ?`); 
+        paramm.push(name);
     }
-    if (location) { 
-        queryadd.push(`location = ?`)
-        paramm.push(location)
+    if (location) {
+        queryadd.push(`location = ?`);
+        paramm.push(location);
     }
-    if (price) { 
-        queryadd.push(`price = ?`)
-        paramm.push(price)
+    if (price) {
+        queryadd.push(`price = ?`);
+        paramm.push(price);
     }
-    if (rating) { 
-        queryadd.push(`rating = ?`)
-        paramm.push(rating)
+    if (rating) {
+        queryadd.push(`rating = ?`);
+        paramm.push(rating);
     }
-    if (phonenum) { 
-        queryadd.push(`phonenum = ?`)
-        paramm.push(phonenum)
+    if (phonenum) {
+        queryadd.push(`phonenum = ?`);
+        paramm.push(phonenum);
     }
-    if (court_amenities) { 
-        queryadd.push(`court_amenities = ?`)
-        paramm.push(court_amenities)
-    }
-
-
-    if (queryadd === 0){
-        return res.status(400).send('No fields to update.')
+    if (court_amenities) {
+        queryadd.push(`court_amenities = ?`);
+        paramm.push(court_amenities);
     }
 
-    paramm.push(userid)
+    if (queryadd.length === 0) {
+        return res.status(400).send('No fields to update.');
+    }
+   
+    paramm.push(id);
 
-    db.run(`UPDATE COURTS SET ${updates.join(',')} WHERE id = ?`,
+    db.run(
+        `UPDATE COURTS SET ${queryadd.join(', ')} WHERE id = ?`,
         paramm,
         (err) => {
-            if (err) return res.status(500).send(err);
+            if (err) return res.status(500).send(err.message); 
             res.status(200).send('Court updated successfully');
-        });
+        }
+    );
 });
 
-server.delete('/court/:id', (req, res) => {
+
+
+server.delete('/courts/:id', (req, res) => {
     const { id } = req.params;
     db.run('DELETE FROM COURTS WHERE id = ?', [id], (err) => {
         if (err) return res.status(500).send(err);
