@@ -9,7 +9,7 @@ server.post(`/user/register`,(req,res)=>{
     const name = req.body.name
     const email = req.body.email
     const password = req.body.password
-    let phonenum = req.body.phonenum
+    const phonenum = req.body.phonenum
     
 
     db.run(`INSERT INTO USER (name,email,password,phonenum, isadmin) VALUES (?,?,?,?,?)`,[name,email,password,phonenum,0], (err) => {
@@ -19,40 +19,56 @@ server.post(`/user/register`,(req,res)=>{
             return res.status(200).send('Registration Succesful')
         })
 })
-//
+
 server.post('/user/login' , (req,res) =>{
     const email =req.body.email
     const password = req.body.email
-    db.get(`SELECT * FROM USER WHERE email = '${email}' 
-        AND password = '${password}'` ,(err,row)=>{
+    db.get('SELECT * FROM USER WHERE email = ? AND password = ?' , [email, password], (err,row)=> {
             if(err|| !row)
-                return res.status(401).send("Invalid Credentials!")
-            else
+                return res.status(401).send('Invalid Credentials!')
             return res.status(200).send('Login Succesfull!')
-        })
+    })
 })
-//
-server.get('/users', (req, res) =>{
-    db.all('SELECT * FROM USER', (err, rows) =>{
-        if (err) return res.status(500).send(err)
+
+server.get('/users', (req, res) => {
+    const { name, email, isadmin } = req.body
+
+    
+    let query = 'SELECT * FROM USER'
+    const conditions = []
+    const params = []
+
+    if (name) {
+        conditions.push('name LIKE ?')
+        params.push(`%${name}%`)
+    }
+    if (email) {
+        conditions.push('email = ?')
+        params.push(email)
+    }
+    if (isadmin !== undefined) {
+        conditions.push('ISADMIN = ?')
+        params.push(isadmin)
+    }
+
+    if (conditions.length) query += ' WHERE ' + conditions.join(' AND ')
+    
+
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).send('Database error')
         res.status(200).json(rows)
     })
 })
 
-server.get('/user/:id', (req,res) =>{
-    const userId = req.params.id;
 
-    const query = `SELECT * FROM USER WHERE id = ?`;
-    db.get(query, [userId], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: "Database error", details: err.message });
-        }
-        if (!row) {
-            return res.status(404).json({ message: "User not found" });
-        }
+server.get('/user/:id', (req,res) =>{
+    const { id }  = req.params;
+    db.get('SELECT * FROM USER WHERE id = ?', [id], (err, row) => {
+        if (err) return res.status(500).send('Error retrieving user.');
+        if (!row) return res.status(404).send('User not found.');
         res.status(200).json(row);
-    })
-})
+    });
+});
 
 server.put('/user/:id', (req, res) => {
     const { id } = req.params;
@@ -70,12 +86,12 @@ server.put('/user/:id', (req, res) => {
 });
 
 server.delete('/user/:id', (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params
     db.run('DELETE FROM USER WHERE id = ?', [id], (err) => {
-        if (err) return res.status(500).send(err);
-        res.status(200).send('User deleted successfully');
-    });
-});
+        if (err) return res.status(500).send('Error deleting the user')
+        res.status(200).send('User deleted successfully')
+    })
+})
 
 server.post(`/courts/addcourts` ,(req,res)=>{
     const name=req.body.name
@@ -85,18 +101,12 @@ server.post(`/courts/addcourts` ,(req,res)=>{
     const phonenum=req.body.phonenum
     const court_amenities=req.body.court_amenities
 
-    db.run(`INSERT INTO COURTS (name, price, location, rating, phonenum, court_amenities) VALUES
-    (?,?,?,?,?,?)`, [name, price, location, rating, phonenum, court_amenities], (err) => {
-        if(err)
-        {
-            console.log(err)
-            return res.status(401).send(err)
+    db.run('INSERT INTO COURTS (name, price, location, rating, phonenum, court_amenities) VALUES(?,?,?,?,?,?)', 
+        [name, price, location, rating, phonenum, court_amenities], (err) => {
+        if (err) return res.status(500).send('Error adding court.')
+            res.status(201).send('Court added successfully.')
         }
-        else
-        {
-            return res.status(200).send(`created court succesfully`)
-        }
-    })
+    )
 })
 
 server.get(`/courts`, (req,res)=>{
@@ -115,10 +125,45 @@ server.get(`/courts`, (req,res)=>{
 })
 
 server.put('/court/:id', (req, res) => {
-    const { id } = req.params;
-    const { name, location, price, rating, PHONENUM, court_amenities } = req.body;
-    db.run('UPDATE COURTS SET name = ?, location = ?, price = ?, rating = ?, phonenum = ?, court_amenities = ? WHERE id = ?',
-        [name, location, price, rating, PHONENUM, court_amenities, id],
+    const userid  = req.USER.id;
+    const { name, location, price, rating, phonenum, court_amenities } = req.body;
+    let queryadd = []
+    let paramm = []
+
+    if (name) { 
+    queryadd.push(`username = ?`)
+    paramm.push(name)
+    }
+    if (location) { 
+        queryadd.push(`location = ?`)
+        paramm.push(location)
+    }
+    if (price) { 
+        queryadd.push(`price = ?`)
+        paramm.push(price)
+    }
+    if (rating) { 
+        queryadd.push(`rating = ?`)
+        paramm.push(rating)
+    }
+    if (phonenum) { 
+        queryadd.push(`phonenum = ?`)
+        paramm.push(phonenum)
+    }
+    if (court_amenities) { 
+        queryadd.push(`court_amenities = ?`)
+        paramm.push(court_amenities)
+    }
+
+
+    if (queryadd === 0){
+        return res.status(400).send('No fields to update.')
+    }
+
+    paramm.push(userid)
+
+    db.run(`UPDATE COURTS SET ${updates.join(',')} WHERE id = ?`,
+        paramm,
         (err) => {
             if (err) return res.status(500).send(err);
             res.status(200).send('Court updated successfully');
@@ -133,19 +178,44 @@ server.delete('/court/:id', (req, res) => {
     });
 });
 
+server.get('/courts/location', (req,res) => {
+    const {location} =req.query
+    db.all('SELECT * FROM COURTS WHERE location = ?', [location], (err,rows) => {
+        if (err) return res.status(500).send('Error retrieving courts')
+            res.status(200).json(rows)
+    })
+})
+
 server.post('/booking', (req, res) => {
-    const { time, date, PHONENUMBER } = req.body;
-    db.run('INSERT INTO BOOKING (time, date, phonenum) VALUES (?, ?, ?)',
-        [time, date, PHONENUMBER],
+    const { time, date, Pphonenum, user_id } = req.body;
+    db.run('INSERT INTO BOOKING (time, date, phonenum, user_id) VALUES (?, ?, ?, ?)',
+        [time, date, phonenum, user_id],
         (err) => {
-            if (err) return res.status(401).send(err)
+            if (err) return res.status(500).send('Booking unsuccesful')
             res.status(200).send('Booking added successfully')
         })
 })
 
+server.get('/user/booking/:id', (req, res) => {
+    const { id } = req.params
+    db.all('SELECT * FROM BOOKING WHERE user_id = ?', [id], (err, rows) => {
+        if (err) return res.status(500).send('Error retrieving bookings.')
+        res.status(200).json(rows)
+    })
+})
+
+server.get('/booking/court/:court_id', (req, res) => {
+    const { court_id } = req.params;
+    db.all('SELECT * FROM BOOKING WHERE court_id = ?', [court_id], (err, rows) => {
+        if (err) return res.status(500).send('Error retrieving bookings.')
+        res.status(200).json(rows)
+    })
+})
+
+
 server.put('/booking/:id', (req, res) => {
     const { id } = req.params
-    const { time, date, PHONENUMBER } = req.body
+    const { time, date, phonenum} = req.body
     db.run('UPDATE BOOKING SET time = ?, date = ?, phonenum = ? WHERE id = ?',
         [time, date, phonenum, id],
         (err) => {
@@ -175,6 +245,7 @@ server.post('/review', (req, res) => {
 server.put('/review/:id', (req, res) => {
     const { id } = req.params
     const { court_id, user_id, rating, comment } = req.body
+
     db.run('UPDATE REVIEWS SET court_id = ?, user_id = ?, rating = ?, comment = ? WHERE id = ?',
         [court_id, user_id, rating, comment, id],
         (err) => {
