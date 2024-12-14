@@ -1,1 +1,5 @@
-
+In this repository, the backend section of the project to sections were two files were used db.js and server.js.
+Starting with db.js, the file had the database of each component in the peoject and it had whats going to be the data that was going to be stored in it.
+Secondly, the server.js file it had all the routes used in the project the routes consisted of every component entered in the database but with there functions like (post,put and get) aslo the file had stored in it the port which connects the backend to the frontend for the website to be able to run.
+The third party plug ins that were used in the backend : bcrypt for file hashing which secures users' credentials, cookie parser for cookies and tokensweb for tokens.
+Lastly the steps taken to run the backend, I started with the db.js and in this file i brainstormed what database i wanted to be able to run the project and i had it stored there and for the server.js file i followed the sample code design to have a good layout, added all routes required to run the project, added cookies, tokens and password hashing for security.
